@@ -28,7 +28,7 @@ public partial class MainForm : Form
 
         InitiallizeGrid1();
 
-        _service.PairsUpdated += RefreshGrid;
+        _service.AddNotification(RefreshGrid);
     }
 
     private void InitiallizeWindow()

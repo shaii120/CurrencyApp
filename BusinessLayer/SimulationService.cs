@@ -9,8 +9,7 @@ public class SimulationService
 {
     private readonly CurrencyPairRepository _repo;
     private readonly List<CurrencyPair> _pairs;
-    private readonly Random _rand = new();
-    public event Action? PairsUpdated;
+    private event Action? PairsUpdatedNotifier;
 
     public SimulationService(CurrencyPairRepository repo)
     {
@@ -21,18 +20,23 @@ public class SimulationService
     {
         return _pairs;
     }
+    public void AddNotification(Action callback)
+    {
+        PairsUpdatedNotifier += callback;
+    }
     public void Start()
     {
+        Random _rand = new();
+
         while (true)
         {
             foreach (var p in _pairs)
             {
                 // Simulate a random change between -0.05 and +0.05
                 var change = (decimal)(_rand.NextDouble() - 0.5) * 0.1m;
-                var newValue = p.CurrentValue + change;
-                var newMin = Math.Min(p.MinValue, newValue);
-                var newMax = Math.Max(p.MaxValue, newValue);
-                p.CurrentValue = newValue;
+                p.CurrentValue += change;
+                var newMin = Math.Min(p.MinValue, p.CurrentValue);
+                var newMax = Math.Max(p.MaxValue, p.CurrentValue);
 
                 if (newMin != p.MinValue || newMax != p.MaxValue)
                 {
@@ -43,7 +47,7 @@ public class SimulationService
                 }
             }
 
-            PairsUpdated?.Invoke();
+            PairsUpdatedNotifier?.Invoke();
             Thread.Sleep(2000);
         }
     }

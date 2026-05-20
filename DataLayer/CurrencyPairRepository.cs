@@ -3,6 +3,15 @@ namespace DataLayer;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 
+enum PairReader
+{
+    Id = 0,
+    BaseCode = 1,
+    QuoteCode = 2,
+    MinValue = 3,
+    MaxValue = 4
+}
+
 public class CurrencyPairRepository
 {
     private readonly string _connectionString;
@@ -31,13 +40,16 @@ public class CurrencyPairRepository
             {
                 list.Add(new CurrencyPair
                 {
-                    Id = (int)reader[0],
-                    BaseCode = reader[1].ToString() ?? "",
-                    QuoteCode = reader[2].ToString() ?? "",
-                    MinValue = (decimal)reader[3],
-                    MaxValue = (decimal)reader[4],
-                    // Initialize CurrentValue to MaxValue for demonstration purposes
-                    CurrentValue = (decimal)reader[4]
+                    Id = (int)reader[(int)PairReader.Id],
+                    BaseCode = reader[(int)PairReader.BaseCode].ToString() ?? "",
+                    QuoteCode = reader[(int)PairReader.QuoteCode].ToString() ?? "",
+                    MinValue = (decimal)reader[(int)PairReader.MinValue],
+                    MaxValue = (decimal)reader[(int)PairReader.MaxValue],
+                    // Initialize CurrentValue to start in the middle of the range for demonstration purposes
+                    CurrentValue = (
+                            (decimal)reader[(int)PairReader.MaxValue] +
+                            (decimal)reader[(int)PairReader.MinValue]
+                        ) / 2
                 });
             }
         }
