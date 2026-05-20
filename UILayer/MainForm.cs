@@ -9,7 +9,7 @@ public partial class MainForm : Form
 {
     private readonly SimulationService _service;
     private readonly BindingSource _bindingSource = new();
-    private readonly Dictionary<int, decimal> _previousValues = new();
+    private readonly Dictionary<int, decimal> _previousValues;
 
     public MainForm()
     {
@@ -19,10 +19,12 @@ public partial class MainForm : Form
             .ConnectionString;
         var repo = new CurrencyPairRepository(connectionString);
         _service = new SimulationService(repo);
+        var pairs = _service.GetPairs();
+        _previousValues = pairs.ToDictionary(p => p.Id, p => p.CurrentValue);
 
         InitiallizeWindow();
 
-        _bindingSource.DataSource = _service.GetPairs();
+        _bindingSource.DataSource = pairs;
         dataGridView1.DataSource = _bindingSource;
         dataGridView1.CellFormatting += DataGridView1_CellFormatting;
 
@@ -64,12 +66,6 @@ public partial class MainForm : Form
         }
 
         _bindingSource.ResetBindings(false);
-        dataGridView1.Refresh();
-
-        foreach (CurrencyPair pair in _bindingSource.List)
-        {
-            _previousValues[pair.Id] = pair.CurrentValue;
-        }
     }
 
     private void DataGridView1_CellFormatting(
@@ -84,11 +80,11 @@ public partial class MainForm : Form
 
         var pair = grid.Rows[e.RowIndex].DataBoundItem as CurrencyPair;
 
-        if (pair == null)
+        if (pair == null ||
+            !_previousValues.TryGetValue(pair.Id, out var previous))
         {
             return;
         }
-        _previousValues.TryGetValue(pair.Id, out var previous);
 
         if (pair.CurrentValue > previous)
         {
@@ -102,6 +98,7 @@ public partial class MainForm : Form
         {
             e.CellStyle.ForeColor = Color.Black;
         }
+        _previousValues[pair.Id] = pair.CurrentValue;
     }
 
     protected override void OnLoad(EventArgs e)
